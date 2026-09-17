@@ -4,15 +4,19 @@ from account import BankAccount
 from atm import ATM
 
 
+# =========================================================
+# ATM CASH WITHDRAWAL SIMULATOR
+# Hybrid ATM + OS Synchronization Dashboard
+# =========================================================
+
 class ATMApp:
 
     def __init__(self, root):
-
         self.root = root
-
-        root.title("ATM Cash Withdrawal Simulator")
-        root.geometry("900x600")
-        root.resizable(False, False)
+        self.root.title("ATM Cash Withdrawal Simulator")
+        self.root.geometry("1100x850")
+        self.root.resizable(False, False)
+        self.root.configure(bg="#111827")
 
         # Shared bank account
         self.account = BankAccount(10000)
@@ -21,494 +25,477 @@ class ATMApp:
         self.atm1 = ATM(1, self.account)
         self.atm2 = ATM(2, self.account)
 
-        # Default synchronization mode
         self.safe_mode = True
+        self.log_position = 0
+        self.test_running = False
 
         self.show_welcome_screen()
+
+    # =====================================================
+    # COMMON UI HELPERS
+    # =====================================================
+
+    def clear_screen(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+    def make_button(self, parent, text, command, width=16):
+        return tk.Button(
+            parent,
+            text=text,
+            command=command,
+            width=width,
+            font=("Arial", 10, "bold"),
+            bg="#374151",
+            fg="white",
+            activebackground="#4b5563",
+            activeforeground="white",
+            relief="flat",
+            cursor="hand2",
+            padx=5,
+            pady=6
+        )
 
     # =====================================================
     # WELCOME SCREEN
     # =====================================================
 
     def show_welcome_screen(self):
+        self.clear_screen()
 
-        for widget in self.root.winfo_children():
-            widget.destroy()
+        frame = tk.Frame(self.root, bg="#111827")
+        frame.pack(fill="both", expand=True)
 
-        frame = tk.Frame(
-            self.root,
-            bg="#202020"
-        )
-
-        frame.pack(
-            fill="both",
-            expand=True
-        )
+        tk.Label(
+            frame,
+            text="🏧",
+            font=("Arial", 48),
+            bg="#111827",
+            fg="white"
+        ).pack(pady=(65, 5))
 
         tk.Label(
             frame,
             text="ATM CASH WITHDRAWAL SIMULATOR",
-            font=("Arial", 24, "bold"),
-            fg="white",
-            bg="#202020"
-        ).pack(pady=(70, 20))
+            font=("Arial", 26, "bold"),
+            bg="#111827",
+            fg="white"
+        ).pack()
 
         tk.Label(
             frame,
-            text="Critical Section & Race Condition Demonstration",
+            text="Critical Section • Mutex Synchronization • Race Condition",
             font=("Arial", 13),
-            fg="lightgray",
-            bg="#202020"
+            bg="#111827",
+            fg="#9ca3af"
         ).pack(pady=10)
 
-        tk.Label(
+        card = tk.Frame(
             frame,
+            bg="#1f2937",
+            padx=45,
+            pady=30
+        )
+        card.pack(pady=35)
+
+        tk.Label(
+            card,
             text="SHARED BANK ACCOUNT",
-            font=("Arial", 16, "bold"),
-            fg="white",
-            bg="#202020"
-        ).pack(pady=(50, 10))
+            font=("Arial", 13, "bold"),
+            bg="#1f2937",
+            fg="#d1d5db"
+        ).pack()
 
         tk.Label(
-            frame,
-            text="Balance: ₹10,000",
-            font=("Arial", 22, "bold"),
-            fg="#00ff99",
-            bg="#202020"
+            card,
+            text="₹ 10,000",
+            font=("Arial", 30, "bold"),
+            bg="#1f2937",
+            fg="#34d399"
         ).pack(pady=10)
+
+        tk.Label(
+            card,
+            text="Two ATM terminals • One shared balance",
+            font=("Arial", 10),
+            bg="#1f2937",
+            fg="#9ca3af"
+        ).pack()
 
         tk.Button(
             frame,
             text="START ATM",
-            font=("Arial", 16, "bold"),
-            width=18,
-            height=2,
-            command=self.show_atm_screen
-        ).pack(pady=50)
+            command=self.show_atm_screen,
+            font=("Arial", 14, "bold"),
+            bg="#2563eb",
+            fg="white",
+            activebackground="#1d4ed8",
+            relief="flat",
+            cursor="hand2",
+            width=22,
+            height=2
+        ).pack(pady=15)
 
         tk.Label(
             frame,
-            text="Synchronization Mode: SAFE",
-            font=("Arial", 12, "bold"),
-            fg="#00ff99",
-            bg="#202020"
-        ).pack()
+            text="● SAFE — Mutex Enabled",
+            font=("Arial", 11, "bold"),
+            bg="#111827",
+            fg="#34d399"
+        ).pack(pady=8)
 
     # =====================================================
     # ATM SCREEN
     # =====================================================
 
     def show_atm_screen(self):
+        self.clear_screen()
 
-        for widget in self.root.winfo_children():
-            widget.destroy()
-
-        main_frame = tk.Frame(
-            self.root,
-            bg="#202020"
-        )
-
-        main_frame.pack(
-            fill="both",
-            expand=True
-        )
+        main = tk.Frame(self.root, bg="#111827")
+        main.pack(fill="both", expand=True)
 
         # ---------------- HEADER ----------------
 
-        tk.Label(
-            main_frame,
-            text="ATM CONCURRENT TRANSACTION SYSTEM",
-            font=("Arial", 22, "bold"),
-            fg="white",
-            bg="#202020"
-        ).pack(pady=15)
+        header = tk.Frame(main, bg="#1f2937", height=75)
+        header.pack(fill="x")
+        header.pack_propagate(False)
 
-        # ---------------- SHARED BALANCE ----------------
+        tk.Label(
+            header,
+            text="🏧 ATM CONCURRENT TRANSACTION SYSTEM",
+            font=("Arial", 20, "bold"),
+            bg="#1f2937",
+            fg="white"
+        ).pack(side="left", padx=25, pady=20)
+
+        tk.Label(
+            header,
+            text="OS LAB • CRITICAL SECTION",
+            font=("Arial", 10, "bold"),
+            bg="#1f2937",
+            fg="#9ca3af"
+        ).pack(side="right", padx=25)
+
+        # ---------------- BALANCE ----------------
+
+        balance_card = tk.Frame(main, bg="#1f2937", padx=25, pady=10)
+        balance_card.pack(fill="x", padx=22, pady=(16, 8))
+
+        tk.Label(
+            balance_card,
+            text="SHARED ACCOUNT BALANCE",
+            font=("Arial", 10, "bold"),
+            bg="#1f2937",
+            fg="#9ca3af"
+        ).pack()
 
         self.balance_label = tk.Label(
-            main_frame,
-            text=f"SHARED ACCOUNT BALANCE: ₹{self.account.balance}",
-            font=("Arial", 18, "bold"),
-            fg="#00ff99",
-            bg="#202020"
+            balance_card,
+            text=f"₹ {self.account.balance:,}",
+            font=("Arial", 28, "bold"),
+            bg="#1f2937",
+            fg="#34d399"
+        )
+        self.balance_label.pack()
+
+        # ---------------- ATM TERMINALS ----------------
+
+        atm_area = tk.Frame(main, bg="#111827")
+        atm_area.pack(fill="x", padx=22, pady=8)
+
+        self.create_atm_card(
+            atm_area,
+            "ATM 01",
+            0,
+            self.withdraw_atm1
         )
 
-        self.balance_label.pack(pady=8)
-
-        # =================================================
-        # SYNCHRONIZATION MODE
-        # =================================================
-
-        mode_frame = tk.Frame(
-            main_frame,
-            bg="#303030",
-            padx=15,
-            pady=8
+        self.create_atm_card(
+            atm_area,
+            "ATM 02",
+            1,
+            self.withdraw_atm2
         )
 
-        mode_frame.pack(pady=8)
+        # ---------------- SYNCHRONIZATION ----------------
+
+        sync = tk.Frame(
+            main,
+            bg="#1f2937",
+            padx=18,
+            pady=10
+        )
+        sync.pack(fill="x", padx=22, pady=6)
 
         tk.Label(
-            mode_frame,
-            text="SYNCHRONIZATION MODE:",
-            font=("Arial", 11, "bold"),
-            fg="white",
-            bg="#303030"
-        ).pack(side="left", padx=10)
+            sync,
+            text="SYNCHRONIZATION MODE",
+            font=("Arial", 10, "bold"),
+            bg="#1f2937",
+            fg="#d1d5db"
+        ).pack(side="left", padx=(5, 15))
 
-        self.mode_var = tk.StringVar(
-            value="SAFE"
-        )
+        self.mode_var = tk.StringVar(value="SAFE")
 
         tk.Radiobutton(
-            mode_frame,
+            sync,
             text="SAFE — Mutex Enabled",
             variable=self.mode_var,
             value="SAFE",
-            fg="#00ff99",
-            bg="#303030",
-            selectcolor="#202020",
+            command=self.change_mode,
             font=("Arial", 10, "bold"),
-            command=self.change_mode
+            bg="#1f2937",
+            fg="#34d399",
+            selectcolor="#111827",
+            activebackground="#1f2937",
+            activeforeground="#34d399"
         ).pack(side="left", padx=10)
 
         tk.Radiobutton(
-            mode_frame,
+            sync,
             text="UNSAFE — Mutex Disabled",
             variable=self.mode_var,
             value="UNSAFE",
-            fg="#ff5555",
-            bg="#303030",
-            selectcolor="#202020",
+            command=self.change_mode,
             font=("Arial", 10, "bold"),
-            command=self.change_mode
+            bg="#1f2937",
+            fg="#f87171",
+            selectcolor="#111827",
+            activebackground="#1f2937",
+            activeforeground="#f87171"
         ).pack(side="left", padx=10)
 
-        # =================================================
-        # ATM PANELS
-        # =================================================
-
-        atm_frame = tk.Frame(
-            main_frame,
-            bg="#202020"
+        self.status_label = tk.Label(
+            sync,
+            text="● SAFE — Mutex Enabled",
+            font=("Arial", 10, "bold"),
+            bg="#1f2937",
+            fg="#34d399"
         )
+        self.status_label.pack(side="right", padx=10)
 
-        atm_frame.pack(pady=15)
-
-        # ---------------- ATM 01 ----------------
-
-        atm1_frame = tk.LabelFrame(
-            atm_frame,
-            text="ATM 01",
-            font=("Arial", 14, "bold"),
-            fg="white",
-            bg="#303030",
-            padx=20,
-            pady=15
-        )
-
-        atm1_frame.grid(
-            row=0,
-            column=0,
-            padx=15
-        )
-
-        tk.Label(
-            atm1_frame,
-            text="Enter Amount",
-            fg="white",
-            bg="#303030",
-            font=("Arial", 11)
-        ).pack()
-
-        self.atm1_amount = tk.Entry(
-            atm1_frame,
-            font=("Arial", 13),
-            width=15
-        )
-
-        self.atm1_amount.pack(pady=8)
-
-        tk.Button(
-            atm1_frame,
-            text="WITHDRAW",
-            width=15,
-            command=self.withdraw_atm1
-        ).pack(pady=5)
-
-        # ---------------- ATM 02 ----------------
-
-        atm2_frame = tk.LabelFrame(
-            atm_frame,
-            text="ATM 02",
-            font=("Arial", 14, "bold"),
-            fg="white",
-            bg="#303030",
-            padx=20,
-            pady=15
-        )
-
-        atm2_frame.grid(
-            row=0,
-            column=1,
-            padx=15
-        )
-
-        tk.Label(
-            atm2_frame,
-            text="Enter Amount",
-            fg="white",
-            bg="#303030",
-            font=("Arial", 11)
-        ).pack()
-
-        self.atm2_amount = tk.Entry(
-            atm2_frame,
-            font=("Arial", 13),
-            width=15
-        )
-
-        self.atm2_amount.pack(pady=8)
-
-        tk.Button(
-            atm2_frame,
-            text="WITHDRAW",
-            width=15,
-            command=self.withdraw_atm2
-        ).pack(pady=5)
-
-        # =================================================
-        # CONCURRENT TEST
-        # =================================================
-
-        tk.Button(
-            main_frame,
-            text="RUN CONCURRENT WITHDRAWALS",
-            font=("Arial", 12, "bold"),
-            width=30,
-            height=2,
-            command=self.run_concurrent_test
-        ).pack(pady=15)
-
-        # =================================================
-        # OTHER OPERATIONS
-        # =================================================
-
-        other_frame = tk.Frame(
-            main_frame,
-            bg="#202020"
-        )
-
-        other_frame.pack(pady=5)
-
-        tk.Button(
-            other_frame,
-            text="DEPOSIT",
-            width=15,
-            command=self.deposit
-        ).grid(
-            row=0,
-            column=0,
-            padx=6
-        )
-
-        tk.Button(
-            other_frame,
-            text="CHECK BALANCE",
-            width=15,
-            command=self.check_balance
-        ).grid(
-            row=0,
-            column=1,
-            padx=6
-        )
-
-        tk.Button(
-            other_frame,
-            text="RESET ACCOUNT",
-            width=15,
-            command=self.reset_account
-        ).grid(
-            row=0,
-            column=2,
-            padx=6
-        )
-
-        tk.Button(
-            other_frame,
-            text="EXIT",
-            width=15,
-            command=self.show_welcome_screen
-        ).grid(
-            row=0,
-            column=3,
-            padx=6
-        )
-
-        # =================================================
-        # RACE CONDITION INDICATOR
-        # =================================================
+        # ---------------- RACE STATUS ----------------
 
         self.race_label = tk.Label(
-            main_frame,
-            text="STATUS: NO RACE CONDITION DETECTED",
-            font=("Arial", 13, "bold"),
-            fg="#00ff99",
-            bg="#202020"
+            main,
+            text="✓  NO RACE CONDITION DETECTED",
+            font=("Arial", 12, "bold"),
+            bg="#064e3b",
+            fg="#6ee7b7",
+            padx=10,
+            pady=8
         )
+        self.race_label.pack(fill="x", padx=22, pady=6)
 
-        self.race_label.pack(pady=(8, 5))
+        # ---------------- ACTIONS ----------------
 
-        # =================================================
-        # LIVE SYNCHRONIZATION MONITOR
-        # =================================================
+        actions = tk.Frame(main, bg="#111827")
+        actions.pack(pady=4)
+
+        self.make_button(
+            actions,
+            "⚡ RUN CONCURRENT TEST",
+            self.run_concurrent_test,
+            25
+        ).grid(row=0, column=0, padx=5)
+
+        self.make_button(
+            actions,
+            "＋ DEPOSIT",
+            self.deposit,
+            15
+        ).grid(row=0, column=1, padx=5)
+
+        self.make_button(
+            actions,
+            "BALANCE",
+            self.check_balance,
+            13
+        ).grid(row=0, column=2, padx=5)
+
+        self.make_button(
+            actions,
+            "RESET",
+            self.reset_account,
+            13
+        ).grid(row=0, column=3, padx=5)
+
+        self.make_button(
+            actions,
+            "EXIT",
+            self.show_welcome_screen,
+            13
+        ).grid(row=0, column=4, padx=5)
+
+        # ---------------- MONITOR ----------------
 
         tk.Label(
-            main_frame,
+            main,
             text="LIVE SYNCHRONIZATION MONITOR",
-            font=("Arial", 12, "bold"),
-            fg="white",
-            bg="#202020"
-        ).pack(pady=(5, 3))
+            font=("Arial", 11, "bold"),
+            bg="#111827",
+            fg="#d1d5db"
+        ).pack(pady=(7, 3))
+
+        monitor_frame = tk.Frame(main, bg="#030712")
+        monitor_frame.pack(padx=22, fill="x")
 
         self.log_box = tk.Text(
-            main_frame,
-            height=9,
-            width=90,
-            bg="#101010",
-            fg="#00ff99",
+            monitor_frame,
+            height=8,
+            width=110,
+            bg="#030712",
+            fg="#a7f3d0",
+            insertbackground="white",
             font=("Consolas", 9),
+            relief="flat",
             state="disabled"
         )
+        self.log_box.pack(padx=8, pady=8)
 
-        self.log_box.pack(pady=5)
-
-        # =================================================
-        # STATUS
-        # =================================================
-
-        self.status_label = tk.Label(
-            main_frame,
-            text="Synchronization Status: SAFE — Mutex Enabled",
-            font=("Arial", 12, "bold"),
-            fg="#00ff99",
-            bg="#202020"
-        )
-
-        self.status_label.pack(pady=8)
-
-        # Remember current log position
-        self.log_position = len(
-            self.account.logger.get_logs()
-        )
-
-        # Start live log monitoring
+        self.log_position = len(self.account.logger.get_logs())
         self.update_log()
 
     # =====================================================
-    # LIVE LOG UPDATE
+    # ATM CARD
+    # =====================================================
+
+    def create_atm_card(self, parent, title, column, command):
+        card = tk.Frame(
+            parent,
+            bg="#1f2937",
+            width=510,
+            height=150,
+            padx=22,
+            pady=12
+        )
+        card.grid(row=0, column=column, padx=8, sticky="nsew")
+        card.grid_propagate(False)
+
+        tk.Label(
+            card,
+            text=f"▣  {title}",
+            font=("Arial", 14, "bold"),
+            bg="#1f2937",
+            fg="white"
+        ).grid(row=0, column=0, columnspan=2, sticky="w")
+
+        tk.Label(
+            card,
+            text="WITHDRAWAL AMOUNT",
+            font=("Arial", 9, "bold"),
+            bg="#1f2937",
+            fg="#9ca3af"
+        ).grid(row=1, column=0, sticky="w", pady=(10, 2))
+
+        entry = tk.Entry(
+            card,
+            font=("Arial", 13),
+            bg="#111827",
+            fg="white",
+            insertbackground="white",
+            relief="flat",
+            width=20
+        )
+        entry.grid(row=2, column=0, padx=(0, 12), sticky="w")
+
+        if title == "ATM 01":
+            self.atm1_amount = entry
+        else:
+            self.atm2_amount = entry
+
+        tk.Button(
+            card,
+            text="WITHDRAW",
+            command=command,
+            font=("Arial", 10, "bold"),
+            bg="#2563eb",
+            fg="white",
+            activebackground="#1d4ed8",
+            relief="flat",
+            cursor="hand2",
+            width=15,
+            pady=6
+        ).grid(row=2, column=1, sticky="e")
+
+    # =====================================================
+    # LIVE LOG
     # =====================================================
 
     def update_log(self):
-
         if not hasattr(self, "log_box"):
             return
 
         logs = self.account.logger.get_logs()
-
         new_logs = logs[self.log_position:]
 
         for log in new_logs:
+            self.log_box.config(state="normal")
+            self.log_box.insert(tk.END, log + "\n")
+            self.log_box.see(tk.END)
+            self.log_box.config(state="disabled")
 
-            self.log_box.config(
-                state="normal"
-            )
-
-            self.log_box.insert(
-                tk.END,
-                log + "\n"
-            )
-
-            self.log_box.see(
-                tk.END
-            )
-
-            self.log_box.config(
-                state="disabled"
-            )
-
-            # Update status based on latest event
             if "Entered critical section" in log:
-
                 self.status_label.config(
-                    text="CRITICAL SECTION ACTIVE",
-                    fg="#ffaa00"
+                    text="● CRITICAL SECTION ACTIVE",
+                    fg="#fbbf24"
                 )
 
             elif "Waiting for critical section" in log:
-
                 self.status_label.config(
-                    text="ATM WAITING FOR CRITICAL SECTION",
-                    fg="#ffaa00"
+                    text="● ATM WAITING FOR CRITICAL SECTION",
+                    fg="#fbbf24"
                 )
 
             elif "Lock released" in log:
-
                 if self.mode_var.get() == "SAFE":
-
                     self.status_label.config(
-                        text="SAFE — Mutex Enabled",
-                        fg="#00ff99"
+                        text="● SAFE — Mutex Enabled",
+                        fg="#34d399"
                     )
 
             elif "Withdrawal successful" in log:
-
                 if self.mode_var.get() == "UNSAFE":
-
                     self.status_label.config(
-                        text="UNSAFE — Critical Section Unprotected",
-                        fg="#ff5555"
+                        text="● UNSAFE — Critical Section Unprotected",
+                        fg="#f87171"
                     )
 
         self.log_position = len(logs)
 
-        self.root.after(
-            200,
-            self.update_log
-        )
+        self.root.after(200, self.update_log)
 
     # =====================================================
-    # CHANGE SYNCHRONIZATION MODE
+    # CHANGE MODE
     # =====================================================
 
     def change_mode(self):
-
         if self.mode_var.get() == "SAFE":
-
             self.safe_mode = True
 
             self.status_label.config(
-                text="Synchronization Status: SAFE — Mutex Enabled",
-                fg="#00ff99"
+                text="● SAFE — Mutex Enabled",
+                fg="#34d399"
             )
 
             self.race_label.config(
-                text="STATUS: NO RACE CONDITION DETECTED",
-                fg="#00ff99"
+                text="✓  NO RACE CONDITION DETECTED",
+                bg="#064e3b",
+                fg="#6ee7b7"
             )
 
         else:
-
             self.safe_mode = False
 
             self.status_label.config(
-                text="Synchronization Status: UNSAFE — Mutex Disabled",
-                fg="#ff5555"
+                text="● UNSAFE — Mutex Disabled",
+                fg="#f87171"
             )
 
             self.race_label.config(
-                text="STATUS: RACE CONDITION TEST MODE",
-                fg="#ff5555"
+                text="⚠  UNSAFE TEST MODE — RACE CONDITION CAN OCCUR",
+                bg="#450a0a",
+                fg="#fca5a5"
             )
 
     # =====================================================
@@ -516,34 +503,23 @@ class ATMApp:
     # =====================================================
 
     def withdraw_atm1(self):
-
         try:
-
-            amount = int(
-                self.atm1_amount.get()
-            )
-
+            amount = int(self.atm1_amount.get())
         except ValueError:
-
             messagebox.showerror(
                 "Invalid Amount",
                 "Enter a valid number."
             )
-
             return
 
         if amount <= 0:
-
             messagebox.showerror(
                 "Invalid Amount",
                 "Enter an amount greater than zero."
             )
-
             return
 
-        synchronized = (
-            self.mode_var.get() == "SAFE"
-        )
+        synchronized = self.mode_var.get() == "SAFE"
 
         thread = self.atm1.start_withdrawal(
             amount,
@@ -554,45 +530,30 @@ class ATMApp:
         thread.join()
 
         self.update_balance()
-
-        self.atm1_amount.delete(
-            0,
-            tk.END
-        )
+        self.atm1_amount.delete(0, tk.END)
 
     # =====================================================
     # ATM 02 WITHDRAWAL
     # =====================================================
 
     def withdraw_atm2(self):
-
         try:
-
-            amount = int(
-                self.atm2_amount.get()
-            )
-
+            amount = int(self.atm2_amount.get())
         except ValueError:
-
             messagebox.showerror(
                 "Invalid Amount",
                 "Enter a valid number."
             )
-
             return
 
         if amount <= 0:
-
             messagebox.showerror(
                 "Invalid Amount",
                 "Enter an amount greater than zero."
             )
-
             return
 
-        synchronized = (
-            self.mode_var.get() == "SAFE"
-        )
+        synchronized = self.mode_var.get() == "SAFE"
 
         thread = self.atm2.start_withdrawal(
             amount,
@@ -603,92 +564,59 @@ class ATMApp:
         thread.join()
 
         self.update_balance()
-
-        self.atm2_amount.delete(
-            0,
-            tk.END
-        )
+        self.atm2_amount.delete(0, tk.END)
 
     # =====================================================
-    # CONCURRENT WITHDRAWAL TEST
+    # CONCURRENT TEST
     # =====================================================
 
     def run_concurrent_test(self):
+        if self.test_running:
+            return
 
         try:
-
-            amount1 = int(
-                self.atm1_amount.get()
-            )
-
-            amount2 = int(
-                self.atm2_amount.get()
-            )
-
+            amount1 = int(self.atm1_amount.get())
+            amount2 = int(self.atm2_amount.get())
         except ValueError:
-
             messagebox.showerror(
                 "Invalid Amount",
                 "Enter valid amounts for both ATMs."
             )
-
             return
 
         if amount1 <= 0 or amount2 <= 0:
-
             messagebox.showerror(
                 "Invalid Amount",
                 "Both amounts must be greater than zero."
             )
-
             return
 
-        synchronized = (
-            self.mode_var.get() == "SAFE"
-        )
+        synchronized = self.mode_var.get() == "SAFE"
 
-        # Store starting balance for race detection
+        self.test_running = True
         self.test_initial_balance = self.account.balance
-        self.test_amount1 = amount1
-        self.test_amount2 = amount2
         self.test_safe_mode = synchronized
+        self.test_log_start = len(self.account.logger.get_logs())
 
-        # Clear previous monitor
-        self.log_box.config(
-            state="normal"
-        )
+        self.log_box.config(state="normal")
+        self.log_box.delete("1.0", tk.END)
+        self.log_box.config(state="disabled")
 
-        self.log_box.delete(
-            "1.0",
-            tk.END
-        )
-
-        self.log_box.config(
-            state="disabled"
-        )
-
-        # Reset race indicator
         if synchronized:
-
             self.race_label.config(
-                text="STATUS: TESTING SAFE SYNCHRONIZATION...",
-                fg="#ffaa00"
+                text="⟳  TESTING SAFE SYNCHRONIZATION...",
+                bg="#78350f",
+                fg="#fde68a"
             )
-
         else:
-
             self.race_label.config(
-                text="STATUS: TESTING UNSAFE SYNCHRONIZATION...",
-                fg="#ffaa00"
+                text="⟳  TESTING UNSAFE SYNCHRONIZATION...",
+                bg="#78350f",
+                fg="#fde68a"
             )
 
-        # Start reading logs from current point
-        # Save a fixed log position for race-condition detection
-        self.test_log_start = len(
-            self.account.logger.get_logs()
-        )
+        self.log_position = len(self.account.logger.get_logs())
 
-        # Create concurrent threads
         thread1 = self.atm1.start_withdrawal(
             amount1,
             synchronized
@@ -699,11 +627,9 @@ class ATMApp:
             synchronized
         )
 
-        # Start both threads
         thread1.start()
         thread2.start()
 
-        # Check their status without freezing GUI
         self.root.after(
             100,
             self.check_threads,
@@ -714,7 +640,7 @@ class ATMApp:
         )
 
     # =====================================================
-    # CHECK CONCURRENT THREADS
+    # CHECK THREADS
     # =====================================================
 
     def check_threads(
@@ -724,9 +650,7 @@ class ATMApp:
         amount1,
         amount2
     ):
-
         if thread1.is_alive() or thread2.is_alive():
-
             self.root.after(
                 100,
                 self.check_threads,
@@ -735,112 +659,94 @@ class ATMApp:
                 amount1,
                 amount2
             )
+            return
 
-        else:
+        self.test_running = False
+        self.update_balance()
 
-            self.update_balance()
+        initial_balance = self.test_initial_balance
+        final_balance = self.account.balance
+        total_requested = amount1 + amount2
 
-            # ---------------------------------------------
-            # RACE CONDITION DETECTION
-            # ---------------------------------------------
+        logs = self.account.logger.get_logs()
+        recent_logs = logs[self.test_log_start:]
 
-            total_requested = amount1 + amount2
-            initial_balance = self.test_initial_balance
-            final_balance = self.account.balance
+        successful_withdrawals = 0
 
-            logs = self.account.logger.get_logs()
+        for log in recent_logs:
+            if "Withdrawal successful" in log:
+                successful_withdrawals += 1
 
-            recent_logs = logs[self.test_log_start:]
+        # ---------------- RACE CONDITION ----------------
 
-            successful_withdrawals = 0
+        if (
+            not self.test_safe_mode
+            and successful_withdrawals >= 2
+            and total_requested > initial_balance
+        ):
+            self.race_label.config(
+                text="🔴  RACE CONDITION DETECTED",
+                bg="#7f1d1d",
+                fg="#fecaca",
+                font=("Arial", 14, "bold")
+            )
 
-            for log in recent_logs:
+            messagebox.showwarning(
+                "RACE CONDITION DETECTED",
+                f"Both ATM transactions succeeded.\n\n"
+                f"Initial Balance: ₹{initial_balance:,}\n"
+                f"Total Requested: ₹{total_requested:,}\n"
+                f"Final Balance: ₹{final_balance:,}\n\n"
+                f"INCONSISTENT ACCOUNT STATE\n\n"
+                f"The shared balance was accessed "
+                f"without synchronization."
+            )
 
-                if "Withdrawal successful" in log:
-                    successful_withdrawals += 1
+        # ---------------- SAFE RESULT ----------------
 
-            # UNSAFE CASE
-            # Both withdrawals succeed even though their
-            # combined amount exceeds the initial balance.
-            if (
-                not self.test_safe_mode
-                and successful_withdrawals >= 2
-                and total_requested > initial_balance
-            ):
-
-                self.race_label.config(
-                    text="🔴 RACE CONDITION DETECTED",
-                    fg="#ff3333",
-                    font=("Arial", 15, "bold")
-                )
-
-                messagebox.showwarning(
-                    "RACE CONDITION DETECTED",
-                    f"Both ATM transactions succeeded.\n\n"
-                    f"Initial Balance: ₹{initial_balance}\n"
-                    f"Total Requested: ₹{total_requested}\n"
-                    f"Final Balance: ₹{final_balance}\n\n"
-                    f"INCONSISTENT ACCOUNT STATE\n\n"
-                    f"The shared balance was accessed "
-                    f"without synchronization."
-                )
-
-            # SAFE CASE
-            elif (
-                self.test_safe_mode
-                and total_requested > initial_balance
-            ):
-
-                self.race_label.config(
-                    text="🟢 NO RACE CONDITION — MUTEX PROTECTED",
-                    fg="#00ff99",
-                    font=("Arial", 13, "bold")
-                )
-
-                messagebox.showinfo(
-                    "Safe Synchronization",
-                    f"Mutex protected the critical section.\n\n"
-                    f"Initial Balance: ₹{initial_balance}\n"
-                    f"Total Requested: ₹{total_requested}\n"
-                    f"Final Balance: ₹{final_balance}\n\n"
-                    f"Only valid transactions were allowed."
-                )
-
-            else:
-
-                self.race_label.config(
-                    text="🟢 NO RACE CONDITION DETECTED",
-                    fg="#00ff99",
-                    font=("Arial", 13, "bold")
-                )
-
-            # ---------------------------------------------
-            # FINAL RESULT
-            # ---------------------------------------------
+        elif (
+            self.test_safe_mode
+            and total_requested > initial_balance
+        ):
+            self.race_label.config(
+                text="🟢  NO RACE CONDITION — MUTEX PROTECTED",
+                bg="#064e3b",
+                fg="#6ee7b7",
+                font=("Arial", 13, "bold")
+            )
 
             messagebox.showinfo(
-                "Concurrent Test Complete",
-                f"ATM 01 requested: ₹{amount1}\n"
-                f"ATM 02 requested: ₹{amount2}\n\n"
-                f"Final Balance: ₹{self.account.balance}"
+                "Safe Synchronization",
+                f"Mutex protected the critical section.\n\n"
+                f"Initial Balance: ₹{initial_balance:,}\n"
+                f"Total Requested: ₹{total_requested:,}\n"
+                f"Final Balance: ₹{final_balance:,}\n\n"
+                f"Only valid transactions were allowed."
             )
 
-            self.atm1_amount.delete(
-                0,
-                tk.END
+        else:
+            self.race_label.config(
+                text="🟢  NO RACE CONDITION DETECTED",
+                bg="#064e3b",
+                fg="#6ee7b7",
+                font=("Arial", 13, "bold")
             )
 
-            self.atm2_amount.delete(
-                0,
-                tk.END
-            )
+        messagebox.showinfo(
+            "Concurrent Test Complete",
+            f"ATM 01 requested: ₹{amount1:,}\n"
+            f"ATM 02 requested: ₹{amount2:,}\n\n"
+            f"Final Balance: ₹{final_balance:,}"
+        )
+
+        self.atm1_amount.delete(0, tk.END)
+        self.atm2_amount.delete(0, tk.END)
 
     # =====================================================
     # DEPOSIT
     # =====================================================
 
     def deposit(self):
-
         amount = simpledialog.askinteger(
             "Deposit",
             "Enter deposit amount:"
@@ -850,17 +756,13 @@ class ATMApp:
             return
 
         if amount <= 0:
-
             messagebox.showerror(
                 "Invalid Amount",
                 "Enter a valid amount."
             )
-
             return
 
-        synchronized = (
-            self.mode_var.get() == "SAFE"
-        )
+        synchronized = self.mode_var.get() == "SAFE"
 
         thread = self.atm1.start_deposit(
             amount,
@@ -874,7 +776,7 @@ class ATMApp:
 
         messagebox.showinfo(
             "Transaction Complete",
-            f"ATM 1 processed deposit of ₹{amount}."
+            f"ATM 1 processed deposit of ₹{amount:,}."
         )
 
     # =====================================================
@@ -882,65 +784,49 @@ class ATMApp:
     # =====================================================
 
     def check_balance(self):
-
         messagebox.showinfo(
             "Account Balance",
-            f"Available Balance: ₹{self.account.balance}"
+            f"Available Balance: ₹{self.account.balance:,}"
         )
 
     # =====================================================
-    # RESET ACCOUNT
+    # RESET
     # =====================================================
 
     def reset_account(self):
+        self.account = BankAccount(10000)
 
-        self.account = BankAccount(
-            10000
-        )
+        self.atm1 = ATM(1, self.account)
+        self.atm2 = ATM(2, self.account)
 
-        self.atm1 = ATM(
-            1,
-            self.account
-        )
-
-        self.atm2 = ATM(
-            2,
-            self.account
-        )
+        self.test_running = False
+        self.safe_mode = True
 
         self.update_balance()
 
         self.log_position = 0
 
-        self.log_box.config(
-            state="normal"
-        )
+        if hasattr(self, "log_box"):
+            self.log_box.config(state="normal")
+            self.log_box.delete("1.0", tk.END)
+            self.log_box.config(state="disabled")
 
-        self.log_box.delete(
-            "1.0",
-            tk.END
-        )
+        if hasattr(self, "mode_var"):
+            self.mode_var.set("SAFE")
 
-        self.log_box.config(
-            state="disabled"
-        )
+        if hasattr(self, "status_label"):
+            self.status_label.config(
+                text="● SAFE — Mutex Enabled",
+                fg="#34d399"
+            )
 
-        self.status_label.config(
-            text="Synchronization Status: SAFE — Mutex Enabled",
-            fg="#00ff99"
-        )
-
-        self.race_label.config(
-            text="STATUS: NO RACE CONDITION DETECTED",
-            fg="#00ff99",
-            font=("Arial", 13, "bold")
-        )
-
-        self.mode_var.set(
-            "SAFE"
-        )
-
-        self.safe_mode = True
+        if hasattr(self, "race_label"):
+            self.race_label.config(
+                text="✓  NO RACE CONDITION DETECTED",
+                bg="#064e3b",
+                fg="#6ee7b7",
+                font=("Arial", 12, "bold")
+            )
 
         messagebox.showinfo(
             "Account Reset",
@@ -952,10 +838,10 @@ class ATMApp:
     # =====================================================
 
     def update_balance(self):
-
-        self.balance_label.config(
-            text=f"SHARED ACCOUNT BALANCE: ₹{self.account.balance}"
-        )
+        if hasattr(self, "balance_label"):
+            self.balance_label.config(
+                text=f"₹ {self.account.balance:,}"
+            )
 
 
 # =========================================================
@@ -963,13 +849,8 @@ class ATMApp:
 # =========================================================
 
 def main():
-
     root = tk.Tk()
-
-    app = ATMApp(
-        root
-    )
-
+    ATMApp(root)
     root.mainloop()
 
 
