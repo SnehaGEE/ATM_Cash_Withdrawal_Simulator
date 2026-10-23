@@ -1,73 +1,63 @@
+
+import threading
+
 from account import BankAccount
-from atm import ATM
+from atm import ATM, UPI
+from monitor import TransactionMonitor
 
-def run_withdrawal_test(synchronized):
 
+def run_test(synchronized):
     account = BankAccount(10000)
+    monitor = TransactionMonitor(account)
 
-    atm1 = ATM(1, account)
-    atm2 = ATM(2, account)
+    atm = ATM(1, account)
+    upi = UPI(2, account)
 
-    mode = (
-        "SAFE - WITH SYNCHRONIZATION"
-        if synchronized
-        else "UNSAFE - WITHOUT SYNCHRONIZATION"
+    mode = "SAFE MODE" if synchronized else "UNSAFE DEMO MODE"
+
+    print("\n" + "=" * 45)
+    print(mode)
+    print("=" * 45)
+    print("Initial balance: ₹10,000")
+
+    # Force both unsafe transactions to read the old balance
+    # before either is allowed to update it.
+    if not synchronized:
+        account.demo_barrier = threading.Barrier(2)
+
+    atm_thread = threading.Thread(
+        target=atm.withdraw,
+        args=(7000, synchronized, not synchronized)
     )
 
-    print("\n========================================")
-    print(mode)
-    print("========================================")
-    print("Initial Balance: ₹10,000\n")
+    upi_thread = threading.Thread(
+        target=upi.pay,
+        args=(5000, synchronized, not synchronized)
+    )
 
-    thread1 = atm1.start_withdrawal(7000, synchronized)
-    thread2 = atm2.start_withdrawal(5000, synchronized)
+    atm_thread.start()
+    upi_thread.start()
 
-    thread1.start()
-    thread2.start()
+    atm_thread.join()
+    upi_thread.join()
 
-    thread1.join()
-    thread2.join()
+    result = monitor.analyze()
 
-    print(f"Final Balance: ₹{account.balance}")
-    print("========================================\n")
+    print("\nFinal balance:", f"₹{account.balance}")
+    print("Monitor status:", result["status"])
+    print("Details:", result["message"])
 
+    if result["evidence"]:
+        print("Evidence:")
+        for item in result["evidence"]:
+            print("-", item)
 
-def run_deposit_withdrawal_test():
-
-    account = BankAccount(10000)
-
-    atm1 = ATM(1, account)
-    atm2 = ATM(2, account)
-    atm3 = ATM(3, account)
-
-    print("\n========================================")
-    print("DEPOSIT + WITHDRAWAL TEST")
-    print("========================================")
-    print("Initial Balance: ₹10,000\n")
-
-    thread1 = atm1.start_withdrawal(7000, True)
-    thread2 = atm2.start_deposit(5000, True)
-    thread3 = atm3.start_withdrawal(6000, True)
-
-    thread1.start()
-    thread2.start()
-    thread3.start()
-
-    thread1.join()
-    thread2.join()
-    thread3.join()
-
-    print(f"Final Balance: ₹{account.balance}")
-    print("========================================\n")
+    print("=" * 45)
 
 
 def main():
-
-    run_withdrawal_test(False)
-
-    run_withdrawal_test(True)
-
-    run_deposit_withdrawal_test()
+    run_test(synchronized=True)
+    run_test(synchronized=False)
 
 
 if __name__ == "__main__":
