@@ -1,7 +1,6 @@
 import threading
 from datetime import datetime
 
-
 class TransactionLogger:
 
     def __init__(self):

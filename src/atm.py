@@ -1,6 +1,5 @@
 import threading
 
-
 class ATM:
     def __init__(self, atm_id, account):
         self.atm_id = atm_id

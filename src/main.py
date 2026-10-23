@@ -1,7 +1,6 @@
 from account import BankAccount
 from atm import ATM
 
-
 def run_withdrawal_test(synchronized):
 
     account = BankAccount(10000)
@@ -64,13 +63,10 @@ def run_deposit_withdrawal_test():
 
 def main():
 
-    # Test 1: Demonstrate race condition
     run_withdrawal_test(False)
 
-    # Test 2: Demonstrate race-condition prevention
     run_withdrawal_test(True)
 
-    # Test 3: Concurrent deposit and withdrawals
     run_deposit_withdrawal_test()
 
 

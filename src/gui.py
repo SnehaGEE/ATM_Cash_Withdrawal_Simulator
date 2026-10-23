@@ -3,12 +3,6 @@ from tkinter import messagebox, simpledialog
 from account import BankAccount
 from atm import ATM
 
-
-# =========================================================
-# ATM CASH WITHDRAWAL SIMULATOR
-# Hybrid ATM + OS Synchronization Dashboard
-# =========================================================
-
 class ATMApp:
 
     def __init__(self, root):
@@ -17,11 +11,7 @@ class ATMApp:
         self.root.geometry("1100x850")
         self.root.resizable(False, False)
         self.root.configure(bg="#111827")
-
-        # Shared bank account
         self.account = BankAccount(10000)
-
-        # Two ATM terminals accessing the same account
         self.atm1 = ATM(1, self.account)
         self.atm2 = ATM(2, self.account)
 
@@ -30,10 +20,6 @@ class ATMApp:
         self.test_running = False
 
         self.show_welcome_screen()
-
-    # =====================================================
-    # COMMON UI HELPERS
-    # =====================================================
 
     def clear_screen(self):
         for widget in self.root.winfo_children():
@@ -55,10 +41,6 @@ class ATMApp:
             padx=5,
             pady=6
         )
-
-    # =====================================================
-    # WELCOME SCREEN
-    # =====================================================
 
     def show_welcome_screen(self):
         self.clear_screen()
@@ -144,17 +126,11 @@ class ATMApp:
             fg="#34d399"
         ).pack(pady=8)
 
-    # =====================================================
-    # ATM SCREEN
-    # =====================================================
-
     def show_atm_screen(self):
         self.clear_screen()
 
         main = tk.Frame(self.root, bg="#111827")
         main.pack(fill="both", expand=True)
-
-        # ---------------- HEADER ----------------
 
         header = tk.Frame(main, bg="#1f2937", height=75)
         header.pack(fill="x")
@@ -176,8 +152,6 @@ class ATMApp:
             fg="#9ca3af"
         ).pack(side="right", padx=25)
 
-        # ---------------- BALANCE ----------------
-
         balance_card = tk.Frame(main, bg="#1f2937", padx=25, pady=10)
         balance_card.pack(fill="x", padx=22, pady=(16, 8))
 
@@ -198,8 +172,6 @@ class ATMApp:
         )
         self.balance_label.pack()
 
-        # ---------------- ATM TERMINALS ----------------
-
         atm_area = tk.Frame(main, bg="#111827")
         atm_area.pack(fill="x", padx=22, pady=8)
 
@@ -216,8 +188,6 @@ class ATMApp:
             1,
             self.withdraw_atm2
         )
-
-        # ---------------- SYNCHRONIZATION ----------------
 
         sync = tk.Frame(
             main,
@@ -274,8 +244,6 @@ class ATMApp:
         )
         self.status_label.pack(side="right", padx=10)
 
-        # ---------------- RACE STATUS ----------------
-
         self.race_label = tk.Label(
             main,
             text="✓  NO RACE CONDITION DETECTED",
@@ -286,8 +254,6 @@ class ATMApp:
             pady=8
         )
         self.race_label.pack(fill="x", padx=22, pady=6)
-
-        # ---------------- ACTIONS ----------------
 
         actions = tk.Frame(main, bg="#111827")
         actions.pack(pady=4)
@@ -327,8 +293,6 @@ class ATMApp:
             13
         ).grid(row=0, column=4, padx=5)
 
-        # ---------------- MONITOR ----------------
-
         tk.Label(
             main,
             text="LIVE SYNCHRONIZATION MONITOR",
@@ -355,10 +319,6 @@ class ATMApp:
 
         self.log_position = len(self.account.logger.get_logs())
         self.update_log()
-
-    # =====================================================
-    # ATM CARD
-    # =====================================================
 
     def create_atm_card(self, parent, title, column, command):
         card = tk.Frame(
@@ -418,10 +378,6 @@ class ATMApp:
             pady=6
         ).grid(row=2, column=1, sticky="e")
 
-    # =====================================================
-    # LIVE LOG
-    # =====================================================
-
     def update_log(self):
         if not hasattr(self, "log_box"):
             return
@@ -465,10 +421,6 @@ class ATMApp:
 
         self.root.after(200, self.update_log)
 
-    # =====================================================
-    # CHANGE MODE
-    # =====================================================
-
     def change_mode(self):
         if self.mode_var.get() == "SAFE":
             self.safe_mode = True
@@ -498,10 +450,6 @@ class ATMApp:
                 fg="#fca5a5"
             )
 
-    # =====================================================
-    # ATM 01 WITHDRAWAL
-    # =====================================================
-
     def withdraw_atm1(self):
         try:
             amount = int(self.atm1_amount.get())
@@ -521,6 +469,8 @@ class ATMApp:
 
         synchronized = self.mode_var.get() == "SAFE"
 
+        initial_balance = self.account.balance
+
         thread = self.atm1.start_withdrawal(
             amount,
             synchronized
@@ -529,12 +479,24 @@ class ATMApp:
         thread.start()
         thread.join()
 
+        final_balance = self.account.balance
+
         self.update_balance()
         self.atm1_amount.delete(0, tk.END)
 
-    # =====================================================
-    # ATM 02 WITHDRAWAL
-    # =====================================================
+        if final_balance < initial_balance:
+            messagebox.showinfo(
+                "Withdrawal Successful",
+                f"ATM 1\n\n"
+                f"Amount Withdrawn: ₹{amount:,}\n"
+                f"Remaining Balance: ₹{final_balance:,}"
+            )
+        else:
+            messagebox.showerror(
+                "Withdrawal Failed",
+                f"Insufficient balance.\n\n"
+                f"Available Balance: ₹{initial_balance:,}"
+            )
 
     def withdraw_atm2(self):
         try:
@@ -555,6 +517,8 @@ class ATMApp:
 
         synchronized = self.mode_var.get() == "SAFE"
 
+        initial_balance = self.account.balance
+
         thread = self.atm2.start_withdrawal(
             amount,
             synchronized
@@ -563,12 +527,24 @@ class ATMApp:
         thread.start()
         thread.join()
 
+        final_balance = self.account.balance
+
         self.update_balance()
         self.atm2_amount.delete(0, tk.END)
 
-    # =====================================================
-    # CONCURRENT TEST
-    # =====================================================
+        if final_balance < initial_balance:
+            messagebox.showinfo(
+                "Withdrawal Successful",
+                f"ATM 2\n\n"
+                f"Amount Withdrawn: ₹{amount:,}\n"
+                f"Remaining Balance: ₹{final_balance:,}"
+            )
+        else:
+            messagebox.showerror(
+                "Withdrawal Failed",
+                f"Insufficient balance.\n\n"
+                f"Available Balance: ₹{initial_balance:,}"
+            )
 
     def run_concurrent_test(self):
         if self.test_running:
@@ -639,10 +615,6 @@ class ATMApp:
             amount2
         )
 
-    # =====================================================
-    # CHECK THREADS
-    # =====================================================
-
     def check_threads(
         self,
         thread1,
@@ -677,8 +649,6 @@ class ATMApp:
             if "Withdrawal successful" in log:
                 successful_withdrawals += 1
 
-        # ---------------- RACE CONDITION ----------------
-
         if (
             not self.test_safe_mode
             and successful_withdrawals >= 2
@@ -701,8 +671,6 @@ class ATMApp:
                 f"The shared balance was accessed "
                 f"without synchronization."
             )
-
-        # ---------------- SAFE RESULT ----------------
 
         elif (
             self.test_safe_mode
@@ -742,10 +710,6 @@ class ATMApp:
         self.atm1_amount.delete(0, tk.END)
         self.atm2_amount.delete(0, tk.END)
 
-    # =====================================================
-    # DEPOSIT
-    # =====================================================
-
     def deposit(self):
         amount = simpledialog.askinteger(
             "Deposit",
@@ -779,19 +743,11 @@ class ATMApp:
             f"ATM 1 processed deposit of ₹{amount:,}."
         )
 
-    # =====================================================
-    # CHECK BALANCE
-    # =====================================================
-
     def check_balance(self):
         messagebox.showinfo(
             "Account Balance",
             f"Available Balance: ₹{self.account.balance:,}"
         )
-
-    # =====================================================
-    # RESET
-    # =====================================================
 
     def reset_account(self):
         self.account = BankAccount(10000)
@@ -833,26 +789,16 @@ class ATMApp:
             "Shared account reset to ₹10,000."
         )
 
-    # =====================================================
-    # UPDATE BALANCE
-    # =====================================================
-
     def update_balance(self):
         if hasattr(self, "balance_label"):
             self.balance_label.config(
                 text=f"₹ {self.account.balance:,}"
             )
 
-
-# =========================================================
-# MAIN
-# =========================================================
-
 def main():
     root = tk.Tk()
     ATMApp(root)
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()

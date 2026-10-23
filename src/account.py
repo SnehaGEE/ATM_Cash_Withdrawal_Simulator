@@ -2,7 +2,6 @@ import threading
 import time
 from logger import TransactionLogger
 
-
 class BankAccount:
 
     def __init__(self, balance):
@@ -29,7 +28,6 @@ class BankAccount:
 
             current_balance = self.balance
 
-            # Simulate ATM processing time
             time.sleep(1)
 
             if current_balance >= amount:
